@@ -41,9 +41,16 @@ FastSharedPreferences sharedPreferences = FastSharedPreferences.get(FSP_ID);
 ```
 
 ## 性能对比
-我们将 FastSharedPreferences同 SharedPreferences、SQLite以及腾讯的MMKV进行对比,测试的结果是对每项测试重复200次取平均值（对SharedPreferences和SQLite没有重复这么多次，因为时间太长了:)）。相关测试代码参见[benchmark](https://github.com/JeremyLiao/FastSharedPreferences/tree/master/FastSharedPreferences/app/src/main/java/com/jeremy/fspdemo/benchmark)。
+我们将 FastSharedPreferences同 SharedPreferences、SQLite以及腾讯的MMKV进行对比，测试的结果是对每项测试重复200次取平均值（对SharedPreferences和SQLite没有重复这么多次，因为时间太长了:)）。相关测试代码参见[benchmark](https://github.com/JeremyLiao/FastSharedPreferences/tree/master/FastSharedPreferences/app/src/main/java/com/jeremy/fspdemo/benchmark)。
 
-### 写入1000个整数
+- 写入1000个整数
+
 ![benchmark_write_int](docs/imgs/benchmark_write_int.svg)
-### 读取1000个整数
+
+（测试机器是 Nexus 6 64G，Android 7.1.1，每组操作重复 200次，时间单位是 ms）
+
+- 读取1000个整数
+
 ![benchmark_read_int](docs/imgs/benchmark_read_int.svg)
+
+（测试机器是 Nexus 6 64G，Android 7.1.1，每组操作重复 200次，时间单位是 ms）
