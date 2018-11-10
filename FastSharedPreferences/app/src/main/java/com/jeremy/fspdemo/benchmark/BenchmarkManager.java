@@ -16,9 +16,9 @@ import java.util.Random;
 public final class BenchmarkManager {
 
     private static final int LOOPS = 1000;
-    private static final String SP_ID = "test";
-    private static final String FSP_ID = "test";
-    private static final String MMKV_ID = "test";
+    private static final String SP_ID = "benchmark_sp";
+    private static final String FSP_ID = "benchmark_fsp";
+    private static final String MMKV_ID = "benchmark_mmkv";
 
     private static final String BATCH_WRITE_INT = "BatchWriteInt";
     private static final String BATCH_READ_INT = "BatchReadInt";
@@ -45,28 +45,28 @@ public final class BenchmarkManager {
         BenchmarkController controller = new BenchmarkController();
         List<BenchmarkResult> results = new ArrayList<>();
         double benchmark = 0;
-        benchmark = controller.runBenchmark(10, new IBenchmark() {
+        benchmark = controller.runBenchmark(5, new IBenchmark() {
             @Override
             public long benchmark() {
                 return spBatchWriteInt();
             }
         });
         results.add(new BenchmarkResult("SharedPreferences", BATCH_WRITE_INT, benchmark));
-        benchmark = controller.runBenchmark(10, new IBenchmark() {
+        benchmark = controller.runBenchmark(5, new IBenchmark() {
             @Override
             public long benchmark() {
                 return sqliteWriteInt();
             }
         });
         results.add(new BenchmarkResult("SQLite", BATCH_WRITE_INT, benchmark));
-        benchmark = controller.runBenchmark(1000, new IBenchmark() {
+        benchmark = controller.runBenchmark(200, new IBenchmark() {
             @Override
             public long benchmark() {
                 return mmkvBatchWriteInt();
             }
         });
         results.add(new BenchmarkResult("MMKV", BATCH_WRITE_INT, benchmark));
-        benchmark = controller.runBenchmark(1000, new IBenchmark() {
+        benchmark = controller.runBenchmark(200, new IBenchmark() {
             @Override
             public long benchmark() {
                 return fspBatchWriteInt();
@@ -76,32 +76,32 @@ public final class BenchmarkManager {
         return results;
     }
 
-    public List<BenchmarkResult> benchmarReadInt() {
+    public List<BenchmarkResult> benchmarkReadInt() {
         BenchmarkController controller = new BenchmarkController();
         List<BenchmarkResult> results = new ArrayList<>();
         double benchmark = 0;
-        benchmark = controller.runBenchmark(10, new IBenchmark() {
+        benchmark = controller.runBenchmark(5, new IBenchmark() {
             @Override
             public long benchmark() {
                 return spBatchReadInt();
             }
         });
         results.add(new BenchmarkResult("SharedPreferences", BATCH_READ_INT, benchmark));
-        benchmark = controller.runBenchmark(10, new IBenchmark() {
+        benchmark = controller.runBenchmark(5, new IBenchmark() {
             @Override
             public long benchmark() {
                 return sqliteBatchReadInt();
             }
         });
         results.add(new BenchmarkResult("SQLite", BATCH_READ_INT, benchmark));
-        benchmark = controller.runBenchmark(1000, new IBenchmark() {
+        benchmark = controller.runBenchmark(200, new IBenchmark() {
             @Override
             public long benchmark() {
                 return mmkvBatchReadInt();
             }
         });
         results.add(new BenchmarkResult("MMKV", BATCH_READ_INT, benchmark));
-        benchmark = controller.runBenchmark(1000, new IBenchmark() {
+        benchmark = controller.runBenchmark(200, new IBenchmark() {
             @Override
             public long benchmark() {
                 return fspBatchReadInt();

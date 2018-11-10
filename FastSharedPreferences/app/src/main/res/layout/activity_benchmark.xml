@@ -11,19 +11,13 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="toBenchmark"
-        android:text="To Benchmark" />
+        android:onClick="batchWriteInt"
+        android:text="写入1000个随机整数BenchMark" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="writeInt"
-        android:text="写入整数" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="readInt"
-        android:text="读取整数" />
+        android:onClick="batchReadInt"
+        android:text="读取1000个整数BenchMark" />
 
 </LinearLayout>
