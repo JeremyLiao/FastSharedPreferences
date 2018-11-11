@@ -1,5 +1,5 @@
 # FastSharedPreferences——高性能Android key-value组件
-FastSharedPreferences是一个Android平台的高性能Android key-value组件。
+FastSharedPreferences是一个Android平台的高性能key-value组件。
 ## FastSharedPreferences特点
 1. 实现了SharedPreferences和SharedPreferences.Editor接口，便于无缝替换SharedPreferences。
 2. 增强了SharedPreferences，增加了写入/读取Serializable的接口。
