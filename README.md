@@ -6,7 +6,8 @@ FastSharedPreferences是一个Android平台的高性能key-value组件。
 3. 高效的写入/读取性能，读写性能相比SharedPreferences增强了200-300倍
 4. 纯java实现，很好的兼容性和稳定性
 5. 实现代码简洁，aar体积很小
-6. 目前只支持单进程使用
+6. 支持跨进程使用（同时实现高性能和跨进程的难度超出预期，这一点后面会逐渐优化）
+7. 支持基于LRU的缓存管理，减少内存使用
 
 ## FastSharedPreferences原理
 - **适合高强度/高频次写入读取**
