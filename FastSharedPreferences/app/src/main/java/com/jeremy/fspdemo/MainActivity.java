@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.jeremy.fastsharedpreferences.FastSharedPreferences;
+import com.jeremy.fspdemo.bean.IPSData;
 import com.jeremy.fspdemo.benchmark.BenchmarkActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,5 +34,12 @@ public class MainActivity extends AppCompatActivity {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get(FSP_ID);
         int ret = sharedPreferences.getInt("test_key", -1);
         Toast.makeText(this, "Read Int: " + ret, Toast.LENGTH_SHORT).show();
+    }
+
+    public void interProcessWrite(View v) {
+        IPSData data = new IPSData(FSP_ID, "test_key", 200);
+        Intent intent = new Intent(this, InterProcessService.class);
+        intent.putExtra(InterProcessService.EXTRA_KEY, data);
+        startService(intent);
     }
 }

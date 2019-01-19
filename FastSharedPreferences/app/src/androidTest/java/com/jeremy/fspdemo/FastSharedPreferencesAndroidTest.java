@@ -1,16 +1,23 @@
-package com.jeremy.fastsharedpreferences;
+package com.jeremy.fspdemo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
+import com.jeremy.fastsharedpreferences.FastSharedPreferences;
+import com.jeremy.fspdemo.bean.IPSData;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Created by liaohailiang on 2018/10/24.
@@ -18,10 +25,12 @@ import static org.junit.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class FastSharedPreferencesAndroidTest {
 
+    private Context context;
+
     @Before
     public void setup() {
-        Context appContext = InstrumentationRegistry.getTargetContext();
-        FastSharedPreferences.init(appContext);
+        context = InstrumentationRegistry.getTargetContext();
+        FastSharedPreferences.init(context);
     }
 
     @Test
@@ -133,6 +142,55 @@ public class FastSharedPreferencesAndroidTest {
         FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_cl");
         assertEquals(sharedPreferences.getAll().size(), 0);
+    }
+
+    @Test
+    public void testInterProcessWriteInteger() {
+        IPSData data = new IPSData("ip_test_write_integer", "test_key", 100);
+        Intent intent = new Intent(context, InterProcessService.class);
+        intent.putExtra(InterProcessService.EXTRA_KEY, data);
+        context.startService(intent);
+        sleep(500);
+        FastSharedPreferences sharedPreferences = FastSharedPreferences.get("ip_test_write_integer");
+        assertEquals(sharedPreferences.getInt("test_key", -1), 100);
+    }
+
+    @Test
+    public void testInterProcessWriteInteger1() {
+        FastSharedPreferences sharedPreferences = FastSharedPreferences.get("ip_test_write_integer_1");
+        sharedPreferences.edit().putInt("test_key", 100).apply();
+        assertEquals(sharedPreferences.getInt("test_key", -1), 100);
+        IPSData data = new IPSData("ip_test_write_integer_1", "test_key", 200);
+        Intent intent = new Intent(context, InterProcessService.class);
+        intent.putExtra(InterProcessService.EXTRA_KEY, data);
+        context.startService(intent);
+        sleep(500);
+        assertEquals(sharedPreferences.getInt("test_key", -1), 200);
+    }
+
+    @Test
+    public void testInterProcessWriteInteger2() {
+        final String name = "ip_test_write_integer_2";
+        FastSharedPreferences sharedPreferences = FastSharedPreferences.get(name);
+        Log.d("testInterProcessWriteInteger2", "size: " + sharedPreferences.getAll().size());
+        sharedPreferences.edit().clear().apply();
+        sleep(200);
+        final int loop = 10;
+        for (int i = 0; i < loop; i++) {
+            sharedPreferences.edit().putInt("test_key_" + i, i).apply();
+        }
+        sleep(500);
+        for (int i = 0; i < loop; i++) {
+            int remoteIndex = loop + i;
+            IPSData data = new IPSData(name, "test_key_" + remoteIndex, remoteIndex);
+            Intent intent = new Intent(context, InterProcessService.class);
+            intent.putExtra(InterProcessService.EXTRA_KEY, data);
+            context.startService(intent);
+        }
+        sleep(1000);
+        for (int i = 0; i < loop * 2; i++) {
+            assertEquals(sharedPreferences.getInt("test_key_" + i, -1), i);
+        }
     }
 
     private void sleep(long time) {

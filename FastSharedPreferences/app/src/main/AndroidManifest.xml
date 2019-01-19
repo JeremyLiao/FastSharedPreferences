@@ -18,6 +18,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".benchmark.BenchmarkActivity" />
+
+        <service
+            android:name=".InterProcessService"
+            android:process=":ips" />
     </application>
 
 </manifest>

@@ -1,6 +1,7 @@
 package com.jeremy.fastsharedpreferences;
 
 import android.content.Context;
+import android.os.FileObserver;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -22,8 +23,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class FastSharedPreferences implements EnhancedSharedPreferences {
 
+    private static final String TAG = "FastSharedPreferences";
     private static final Map<String, FastSharedPreferences> FSP_MAP = new HashMap<>();
-    private static final ExecutorService WRITE_EXECUTOR = Executors.newSingleThreadExecutor();
+//    private static final ExecutorService SYNC_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final ExecutorService SYNC_EXECUTOR = Executors.newFixedThreadPool(4);
     private static Context sContext = null;
 
     public static void init(Context context) {
@@ -42,9 +45,7 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
         }
         synchronized (FastSharedPreferences.class) {
             if (!FSP_MAP.containsKey(name)) {
-                HashMap<String, Object> map = (HashMap<String, Object>) new ReadWriteManager(
-                        sContext, name).read();
-                FSP_MAP.put(name, new FastSharedPreferences(name, map));
+                FSP_MAP.put(name, new FastSharedPreferences(name));
             }
             return FSP_MAP.get(name);
         }
@@ -59,13 +60,24 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
     private final FspEditor editor = new FspEditor();
     private final AtomicBoolean needSync = new AtomicBoolean(false);
     private final AtomicBoolean syncing = new AtomicBoolean(false);
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    //这个锁主要是为了锁住拷贝数据的过程，当进行数据拷贝的时候，不允许任何写入操作
+    private final ReadWriteLock copyLock = new ReentrantReadWriteLock();
+    private final DataChangeObserver observer;
 
-    private FastSharedPreferences(String name, Map<String, Object> map) {
+    private FastSharedPreferences(String name) {
         this.name = name;
         this.keyValueMap = new ConcurrentHashMap<>();
-        if (map != null) {
-            this.keyValueMap.putAll(map);
+        reload();
+        observer = new DataChangeObserver(ReadWriteManager.getFilePath(sContext, name));
+        observer.startWatching();
+    }
+
+    private void reload() {
+        Log.d(TAG, "reload data");
+        Object loadedData = new ReadWriteManager(sContext, name).read();
+        this.keyValueMap.clear();
+        if (loadedData != null) {
+            this.keyValueMap.putAll((Map<? extends String, ?>) loadedData);
         }
     }
 
@@ -196,24 +208,24 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
         }
 
         private void put(String s, Object obj) {
-            readWriteLock.readLock().lock();
+            copyLock.readLock().lock();
             keyValueMap.put(s, obj);
-            readWriteLock.readLock().unlock();
+            copyLock.readLock().unlock();
         }
 
         @Override
         public Editor remove(String s) {
-            readWriteLock.readLock().lock();
+            copyLock.readLock().lock();
             keyValueMap.remove(s);
-            readWriteLock.readLock().unlock();
+            copyLock.readLock().unlock();
             return this;
         }
 
         @Override
         public EnhancedEditor clear() {
-            readWriteLock.readLock().lock();
+            copyLock.readLock().lock();
             keyValueMap.clear();
-            readWriteLock.readLock().unlock();
+            copyLock.readLock().unlock();
             return this;
         }
 
@@ -237,7 +249,7 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
             if (syncing.get()) {
                 return;
             }
-            WRITE_EXECUTOR.execute(new SyncTask());
+            SYNC_EXECUTOR.execute(new SyncTask());
         }
 
         private class SyncTask implements Runnable {
@@ -250,22 +262,68 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
                 //先把syncing标记置为true
                 syncing.compareAndSet(false, true);
                 //copy map，copy的过程中不允许写入
-                readWriteLock.writeLock().lock();
+                copyLock.writeLock().lock();
                 Map<String, Object> storeMap = new HashMap<>(keyValueMap);
-                readWriteLock.writeLock().unlock();
+                copyLock.writeLock().unlock();
 //                Log.d("FastSharedPreferences", "start sync with item size: " + storeMap.size());
                 //把needSync置为false，如果在此之后有数据写入，则需要重新同步
                 needSync.compareAndSet(true, false);
+                observer.stopWatching();
                 ReadWriteManager manager = new ReadWriteManager(sContext, name);
                 manager.write(storeMap);
                 //解除同步过程
                 syncing.compareAndSet(true, false);
-//                Log.d("FastSharedPreferences", "sync really finished!!!");
+                Log.d(TAG, "write to file complete");
                 //如果数据被更改，则需要重新同步
                 if (needSync.get()) {
+                    Log.d(TAG, "need to sync again");
                     postSyncTask();
+                } else {
+                    Log.d(TAG, "do not need to sync, start watching");
+                    observer.startWatching();
                 }
             }
+        }
+    }
+
+    private class ReloadTask implements Runnable {
+        @Override
+        public void run() {
+            reload();
+        }
+    }
+
+    private class DataChangeObserver extends FileObserver {
+
+        private static final int FILE_EVENTS = MODIFY | CLOSE_WRITE | DELETE;
+
+        public DataChangeObserver(String path) {
+            super(path, FILE_EVENTS);
+        }
+
+        @Override
+        public void onEvent(int event, @Nullable String path) {
+            Log.d(TAG, "DataChangeObserver: " + event);
+            switch (event) {
+                case CLOSE_WRITE:
+                    onCloseWrite(path);
+                    break;
+                case DELETE:
+                    onDelete(path);
+                    break;
+            }
+        }
+
+        public void onCloseWrite(String path) {
+            if (syncing.get()) {
+                //如果正在同步，则取消reload
+                return;
+            }
+            SYNC_EXECUTOR.execute(new ReloadTask());
+        }
+
+        public void onDelete(String path) {
+            keyValueMap.clear();
         }
     }
 }

@@ -26,4 +26,10 @@
         android:onClick="readInt"
         android:text="读取整数" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="interProcessWrite"
+        android:text="跨进程写入" />
+
 </LinearLayout>
