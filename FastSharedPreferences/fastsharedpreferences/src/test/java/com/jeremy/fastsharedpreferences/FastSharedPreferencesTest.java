@@ -48,7 +48,6 @@ public class FastSharedPreferencesTest {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get("test_write_string");
         sharedPreferences.edit().putString("test_key", "test_value").apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_string");
         assertEquals(sharedPreferences.getString("test_key", ""), "test_value");
     }
@@ -58,7 +57,6 @@ public class FastSharedPreferencesTest {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get("test_write_integer");
         sharedPreferences.edit().putInt("test_key", 100).apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_integer");
         assertEquals(sharedPreferences.getInt("test_key", -1), 100);
     }
@@ -68,7 +66,6 @@ public class FastSharedPreferencesTest {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get("test_write_long");
         sharedPreferences.edit().putLong("test_key", 100).apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_long");
         assertEquals(sharedPreferences.getLong("test_key", -1), 100);
     }
@@ -78,7 +75,6 @@ public class FastSharedPreferencesTest {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get("test_write_float");
         sharedPreferences.edit().putFloat("test_key", 100.0f).apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_float");
         assertTrue(sharedPreferences.getFloat("test_key", -1) == 100.0f);
     }
@@ -88,7 +84,6 @@ public class FastSharedPreferencesTest {
         FastSharedPreferences sharedPreferences = FastSharedPreferences.get("test_write_bool");
         sharedPreferences.edit().putBoolean("test_key", true).apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_bool");
         assertEquals(sharedPreferences.getBoolean("test_key", false), true);
     }
@@ -99,7 +94,6 @@ public class FastSharedPreferencesTest {
         sharedPreferences.edit().putSerializable("test_key",
                 new TestBean("test_str", 100)).apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_ser");
         TestBean testBean = (TestBean) sharedPreferences.getSerializable("test_key", null);
         assertNotNull(testBean);
@@ -114,7 +108,6 @@ public class FastSharedPreferencesTest {
             sharedPreferences.edit().putInt("test_key_" + i, i).apply();
         }
         sleep(200);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_int");
         for (int i = 0; i < 1000; i++) {
             assertEquals(sharedPreferences.getInt("test_key_" + i, -1), i);
@@ -130,7 +123,6 @@ public class FastSharedPreferencesTest {
             sharedPreferences.edit().putInt("test_key_" + i, i).apply();
         }
         sleep(1000);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_count");
         assertEquals(sharedPreferences.getAll().size(), 10000);
     }
@@ -142,7 +134,6 @@ public class FastSharedPreferencesTest {
         sleep(100);
         sharedPreferences.edit().remove("test_key").apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_re");
         assertEquals(sharedPreferences.contains("test_key"), false);
     }
@@ -156,7 +147,6 @@ public class FastSharedPreferencesTest {
         sleep(200);
         sharedPreferences.edit().clear().apply();
         sleep(100);
-        FastSharedPreferences.clearCache();
         sharedPreferences = FastSharedPreferences.get("test_write_cl");
         assertEquals(sharedPreferences.getAll().size(), 0);
     }

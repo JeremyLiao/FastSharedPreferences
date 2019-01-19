@@ -3,10 +3,12 @@ package com.jeremy.fastsharedpreferences;
 import android.content.Context;
 import android.os.FileObserver;
 import android.support.annotation.Nullable;
+import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import com.jeremy.fastsharedpreferences.io.ReadWriteManager;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +26,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FastSharedPreferences implements EnhancedSharedPreferences {
 
     private static final String TAG = "FastSharedPreferences";
-    private static final Map<String, FastSharedPreferences> FSP_MAP = new HashMap<>();
-//    private static final ExecutorService SYNC_EXECUTOR = Executors.newSingleThreadExecutor();
+    //    private static final Map<String, FastSharedPreferences> FSP_CACHE = new HashMap<>();
+    private static final FspCache FSP_CACHE = new FspCache();
+    //    private static final ExecutorService SYNC_EXECUTOR = Executors.newSingleThreadExecutor();
     private static final ExecutorService SYNC_EXECUTOR = Executors.newFixedThreadPool(4);
     private static Context sContext = null;
 
@@ -36,23 +39,17 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
         sContext = context.getApplicationContext();
     }
 
+    public static void setMaxSize(int maxSize) {
+        FSP_CACHE.resize(maxSize);
+    }
+
     public static FastSharedPreferences get(String name) {
         if (name == null || name.length() == 0) {
             return null;
         }
-        if (FSP_MAP.containsKey(name)) {
-            return FSP_MAP.get(name);
-        }
         synchronized (FastSharedPreferences.class) {
-            if (!FSP_MAP.containsKey(name)) {
-                FSP_MAP.put(name, new FastSharedPreferences(name));
-            }
-            return FSP_MAP.get(name);
+            return FSP_CACHE.get(name);
         }
-    }
-
-    public static void clearCache() {
-        FSP_MAP.clear();
     }
 
     private final String name;
@@ -70,15 +67,6 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
         reload();
         observer = new DataChangeObserver(ReadWriteManager.getFilePath(sContext, name));
         observer.startWatching();
-    }
-
-    private void reload() {
-        Log.d(TAG, "reload data");
-        Object loadedData = new ReadWriteManager(sContext, name).read();
-        this.keyValueMap.clear();
-        if (loadedData != null) {
-            this.keyValueMap.putAll((Map<? extends String, ?>) loadedData);
-        }
     }
 
     @Override
@@ -162,6 +150,23 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener onSharedPreferenceChangeListener) {
 
+    }
+
+    private void reload() {
+        Log.d(TAG, "reload data");
+        Object loadedData = new ReadWriteManager(sContext, name).read();
+        this.keyValueMap.clear();
+        if (loadedData != null) {
+            this.keyValueMap.putAll((Map<? extends String, ?>) loadedData);
+        }
+    }
+
+    private int sizeOf() {
+        File file = new File(ReadWriteManager.getFilePath(sContext, name));
+        if (!file.exists()) {
+            return 0;
+        }
+        return (int) (file.length() / 1024);
     }
 
     private class FspEditor implements EnhancedEditor {
@@ -324,6 +329,39 @@ public class FastSharedPreferences implements EnhancedSharedPreferences {
 
         public void onDelete(String path) {
             keyValueMap.clear();
+        }
+    }
+
+    private static class FspCache extends LruCache<String, FastSharedPreferences> {
+
+        private static final int DEFAULT_MAX_SIZE = (int) (Runtime.getRuntime().maxMemory() / 1024 / 16);
+
+        public FspCache() {
+            this(DEFAULT_MAX_SIZE);
+        }
+
+        public FspCache(int maxSize) {
+            super(maxSize);
+        }
+
+        @Override
+        protected int sizeOf(String key, FastSharedPreferences value) {
+            int size = 0;
+            if (value != null) {
+                size = value.sizeOf();
+            }
+            Log.d(TAG, "FspCache sizeOf " + key + " is: " + size);
+            return size;
+        }
+
+        @Override
+        protected FastSharedPreferences create(String key) {
+            return new FastSharedPreferences(key);
+        }
+
+        @Override
+        protected void entryRemoved(boolean evicted, String key, FastSharedPreferences oldValue, FastSharedPreferences newValue) {
+            Log.d(TAG, "FspCache entryRemoved: " + key);
         }
     }
 }
