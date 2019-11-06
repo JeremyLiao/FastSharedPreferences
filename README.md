@@ -20,7 +20,7 @@ FastSharedPreferences是一个Android平台的高性能key-value组件。
 
     通过脏数据标记等技术，减少了同步的次数，使得慢速的I/O不再成为读写速度的瓶颈。
 
-![fsp_principle](docs/imgs/fsp_principle.png)
+![fsp_principle.png](https://i.loli.net/2019/11/06/gy7Zw9U6XascLfR.png)
 ## FastSharedPreferences使用指南
 ### 接入
 
@@ -56,12 +56,12 @@ FastSharedPreferences sharedPreferences = FastSharedPreferences.get(FSP_ID);
 
 - 写入1000个整数
 
-![benchmark_write_int](docs/imgs/benchmark_write_int.png)
+![benchmark_write_int.png](https://i.loli.net/2019/11/06/csDRxL1Wz82Ublq.png)
 
 （测试机器是 Nexus 6 64G，Android 7.1.1，每组操作重复 200次，时间单位是 ms）
 
 - 读取1000个整数
 
-![benchmark_read_int](docs/imgs/benchmark_read_int.png)
+![benchmark_read_int.png](https://i.loli.net/2019/11/06/Kwnr83kmUWjMR4u.png)
 
 （测试机器是 Nexus 6 64G，Android 7.1.1，每组操作重复 200次，时间单位是 ms）
